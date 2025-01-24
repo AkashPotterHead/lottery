@@ -1,14 +1,26 @@
 // src/routes/ticketRoutes.ts
 import { Router } from 'express';
 import { TicketService } from '../services/ticketService';
+import {ValidationService} from '../middlewares/validation'
 
 const ticketService = new TicketService(); // Direct instantiation of service
+const validationService = new ValidationService();
 const router = Router();
 
 // POST /ticket - Create a ticket
 router.post('/', (req, res) => {
-  const ticket = ticketService.createTicket(req.body);
-  res.status(201).json(ticket);
+  //console.log("Here!")
+  try {
+    validationService.validatePostRequest(req);
+    const ticket = ticketService.createTicket(req.body);
+    res.status(201).json(ticket);
+  } catch (error: any) {
+
+    if (error.isValidationError) {
+      res.status(400).json({message:error.message});
+    } else (res.status(500))
+
+  }
 });
 
 // GET /ticket/{id} - Get a specific ticket by ID
