@@ -1,6 +1,6 @@
-// src/index.ts
-import 'dotenv/config';
 import express from 'express';
+import { dbService } from './utils/database';
+import 'dotenv/config'
 import { createTicketRoutes } from './routes/ticketRoutes';
 import { TicketService } from './services/ticketService';
 import { ValidationService } from './middlewares/validation';
@@ -12,18 +12,32 @@ const port = 3000;
 // Middleware
 app.use(express.json());
 
-// Service and Validation Instances
-const ticketService = new TicketService();
-const validationService = new ValidationService();
+async function startServer() {
+  try {
+    // Initialize the DB
+    // Initialize the DB (creating tables if not exist)
+    await dbService.initializeDb()
 
-// Inject services into routes
-const ticketRoutes = createTicketRoutes(ticketService, validationService);
+    // Service and Validation Instances
+    const ticketService = new TicketService();
+    const validationService = new ValidationService();
 
-// Routes
-app.use('/ticket', ticketRoutes);
+    // Inject services into routes
+    const ticketRoutes = createTicketRoutes(ticketService, validationService);
 
-// Start Server
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-  logger.info(`Server running on http://localhost:${port}`);
-});
+    // Routes
+    app.use('/ticket', ticketRoutes);
+
+    // Start Server
+    app.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}`);
+      logger.info(`Server running on http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error('Error during server initialization:', error);
+    process.exit(1); // Exit the process if DB initialization fails
+  }
+}
+
+// Start the server
+startServer();
